@@ -1,0 +1,47 @@
+
+name: Build su Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Prepare project
+        run: |
+          if [ -f su_android_project.zip ]; then
+            unzip -o su_android_project.zip
+          fi
+          if [ -f gradlew ]; then
+            chmod +x gradlew
+            ./gradlew assembleDebug
+          elif [ -f su_android/gradlew ]; then
+            chmod +x su_android/gradlew
+            ./su_android/gradlew -p su_android assembleDebug
+          else
+            echo "Gradle wrapper bulunamadi"
+            exit 1
+          fi
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: su-debug-apk
+          path: |
+            **/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
