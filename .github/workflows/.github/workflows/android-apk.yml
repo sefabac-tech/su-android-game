@@ -37,6 +37,30 @@ jobs:
             echo "Gradle wrapper bulunamadi"
             exit 1
           fi
+          
+      - name: Fix Java JVM target
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          roots = [Path("su_android"), Path(".")]
+          for root in roots:
+              gradle_file = root / "app" / "build.gradle"
+              if not gradle_file.exists():
+                  gradle_file = root / "app" / "build.gradle.kts"
+              if gradle_file.exists():
+                  text = gradle_file.read_text()
+                  text = text.replace(
+                      "JavaVersion.VERSION_1_8",
+                      "JavaVersion.VERSION_17"
+                  )
+                  gradle_file.write_text(text)
+                  print("Updated:", gradle_file)
+                  break
+          else:
+              raise SystemExit("app/build.gradle bulunamadi")
+          PY
+
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
